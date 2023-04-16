@@ -1,56 +1,57 @@
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import java.io.*
-import kotlin.collections.toByteArray
 import java.net.ServerSocket
+import kotlin.system.measureTimeMillis
 
-import kotlin.concurrent.thread
-import kotlin.math.roundToInt
-import kotlin.properties.Delegates
-import kotlin.streams.toList
-
+const val MINIMAL_DILAY: Long = 100
 fun main(args: Array<String>) {
-    val server = ServerSocket(12345)
-    val input: BufferedReader
-    val output: BufferedWriter
-
-    runBlocking {
-
+    print("${measureTimeMillis {
+        val server = ServerSocket(12345)
+        val input: BufferedReader
+        val output: BufferedWriter
         server.accept().apply {
             println("client connected $isConnected")
-
             input = BufferedReader(InputStreamReader(getInputStream()))
             output = BufferedWriter(OutputStreamWriter(getOutputStream()))
-
-//        thread {
-//            var incoming: Int
-//            while(true) {
-//                incoming = input.read()
-//                resultString = isEven(incoming)
-//                output.write(resultString + "\n")
-//                output.flush()
-//            }
-//        }
-//
-//        thread{
-//            var stringIncoming: String
-//            while (true){
-//                stringIncoming = input.readLine()
-//                println("Received $stringIncoming")
-//            }
-//        }
-
-
         }
-//        launch {
-//            var stringIncoming: String
-//            while (true) {
-//                stringIncoming = input.readLine()
-//                println("Received $stringIncoming")
-//            }
-//        }
+        runBlocking {
+            val receiveJob = 
+                launch { receive(input) }  
+//        receive(input)
+            val sendJob = 
+                launch { send(input, output) }
+            launch {
+                repeat(100){
+//                    println(it)
+                    delay(MINIMAL_DILAY)
+                }
+                sendJob.cancel()
+                receiveJob.cancel()
+            }
+        }
+    }.toFloat() / 1000} секунд работы")
+}
+
+fun isEven(value: Int) = when (value % 2 == 0) {
+    true -> "$value - чётное число"
+    false -> "$value - нечётнео число"
+}
+
+suspend fun receive(input: BufferedReader) {
+    coroutineScope {
+        launch {
+            var stringIncoming: String
+            while (true) {
+                stringIncoming = input.readLine()
+                println("Received $stringIncoming")
+                delay(MINIMAL_DILAY)
+            }
+        }
+    }
+}
+
+suspend fun send(input: BufferedReader, output: BufferedWriter) {
+    coroutineScope {
         launch {
             var resultString: String
             var incoming: Int
@@ -59,14 +60,10 @@ fun main(args: Array<String>) {
                 resultString = isEven(incoming)
                 output.write("$resultString\n")
                 output.flush()
+                delay(MINIMAL_DILAY)
             }
         }
     }
-}
-
-fun isEven(value: Int) = when (value % 2 == 0) {
-    true -> "$value - чётное число"
-    false -> "$value - нечётнео число"
 }
 
 
