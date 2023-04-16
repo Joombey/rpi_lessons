@@ -3,9 +3,9 @@ import java.io.*
 import java.net.ServerSocket
 import kotlin.system.measureTimeMillis
 
-const val MINIMAL_DILAY: Long = 100
+const val MINIMAL_DILAY: Long = 1
 fun main(args: Array<String>) {
-    print("${measureTimeMillis {
+    println("${measureTimeMillis {
         val server = ServerSocket(12345)
         val input: BufferedReader
         val output: BufferedWriter
@@ -15,19 +15,22 @@ fun main(args: Array<String>) {
             output = BufferedWriter(OutputStreamWriter(getOutputStream()))
         }
         runBlocking {
-            val receiveJob = 
-                launch { receive(input) }  
+            try {
+                val receiveJob =
+                    launch { receive(input) }
 //        receive(input)
-            val sendJob = 
-                launch { send(input, output) }
-            launch {
-                repeat(100){
+                val sendJob =
+                    launch { send(input, output) }
+                yield()
+                launch {
+                    repeat(10) {
 //                    println(it)
-                    delay(MINIMAL_DILAY)
+                        delay(1000)
+                    }
+                    sendJob.cancel()
+                    receiveJob.cancel()
                 }
-                sendJob.cancel()
-                receiveJob.cancel()
-            }
+            } catch (e: Exception) {}
         }
     }.toFloat() / 1000} секунд работы")
 }

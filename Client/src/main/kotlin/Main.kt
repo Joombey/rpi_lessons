@@ -12,6 +12,7 @@ const val MINIMAL_DILAY: Long = 1
 @OptIn(ExperimentalTime::class)
 fun main(args: Array<String>) {
     println("${measureTimeMillis {
+        
         val client = Socket("127.0.0.1", 12345)
         val input: BufferedReader
         val output: BufferedWriter
@@ -20,19 +21,21 @@ fun main(args: Array<String>) {
             output = BufferedWriter(OutputStreamWriter(getOutputStream()))
         }
         runBlocking {
-            val sendJob = 
-                launch { send(output) }
-            val receiveJob = 
-                launch { receive(input, output) }
-
-            launch {
-                repeat(100){
+            try {
+                val sendJob =
+                    launch { send(output) }
+                val receiveJob =
+                    launch { receive(input, output) }
+                yield()
+                launch {
+                    repeat(10) {
 //                    println(it)
-                    delay(MINIMAL_DILAY)
+                        delay(1000)
+                    }
+                    sendJob.cancel()
+                    receiveJob.cancel()
                 }
-                sendJob.cancel()
-                receiveJob.cancel()
-            }
+            } catch (e: Exception) {}
         }
     }.toFloat() / 1000} секунд работы")
 }
