@@ -1,43 +1,46 @@
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.actor
 import java.io.*
 import java.net.Socket
 import kotlin.random.Random
-import kotlin.system.measureTimeMillis
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
 const val MINIMAL_DILAY: Long = 1
 
-@OptIn(ExperimentalTime::class)
 fun main(args: Array<String>) {
-    println("${measureTimeMillis {
-        
-        val client = Socket("127.0.0.1", 12345)
-        val input: BufferedReader
-        val output: BufferedWriter
-        with(client) {
-            input = BufferedReader(InputStreamReader(getInputStream()))
-            output = BufferedWriter(OutputStreamWriter(getOutputStream()))
+//    startPart1()
+    startPart2()
+}
+
+
+fun startPart2(){
+    val server = Socket("localhost", 12345)
+    val input: BufferedReader
+    val output: PrintWriter
+    with(server) {
+        input = BufferedReader(InputStreamReader(getInputStream()))
+        output = PrintWriter(getOutputStream(), true)
+        var text: String
+        println("/stop\nВвод в формате [num],[space]")
+        while (true) {
+            text = readln().trim()
+            if (text == "/stop") {
+                break
+            }
+            output.println(text)
+            println("Server says: ${input.readLine()}")
         }
-        runBlocking {
-            try {
-                val sendJob =
-                    launch { send(output) }
-                val receiveJob =
-                    launch { receive(input, output) }
-                yield()
-                launch {
-                    repeat(10) {
-//                    println(it)
-                        delay(1000)
-                    }
-                    sendJob.cancel()
-                    receiveJob.cancel()
-                }
-            } catch (e: Exception) {}
-        }
-    }.toFloat() / 1000} секунд работы")
+    }
+}
+fun startPart1(){
+    val server = Socket("127.0.0.1", 12345)
+    val input: BufferedReader
+    val output: PrintWriter
+    with(server) {
+        input = BufferedReader(InputStreamReader(getInputStream()))
+        output = PrintWriter(getOutputStream(), true)
+        output.println("1, -1, 2, 2, -3, 5, -2")
+        val line = input.readLine()
+        println(line)
+    }
 }
 
 suspend fun send(output: BufferedWriter){
